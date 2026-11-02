@@ -5,7 +5,7 @@
 ; RUN: llc < %s -mtriple=aarch64 -O2 -global-isel -global-isel-abort=2 2>&1 | FileCheck %s --check-prefixes=CHECK,GI,GI-NOFP16
 
 ; The canonical form uses <i32 0, i32 poison, i32 poison, ... > for the zero vector operand
-; We use equivalent zeroinitializer instead which has no functional change
+; We use equivalent zeroinitializer for testing instead which has no functional change
 
 define <2 x double> @testv2f64(<2 x double> noundef %vec) {
 ; SD-LABEL: testv2f64:
@@ -26,9 +26,7 @@ entry:
 define <4 x float> @testv4f32(<4 x float> noundef %vec) {
 ; SD-LABEL: testv4f32:
 ; SD:       // %bb.0: // %entry
-; SD-NEXT:    movi v1.2d, #0000000000000000
-; SD-NEXT:    mov v1.s[0], v0.s[0]
-; SD-NEXT:    mov v0.16b, v1.16b
+; SD-NEXT:    fmov s0, s0
 ; SD-NEXT:    ret
 ;
 ; GI-LABEL: testv4f32:
@@ -64,12 +62,17 @@ entry:
 
 
 define <8 x half> @testv8f16(<8 x half> noundef %vec) {
-; SD-LABEL: testv8f16:
-; SD:       // %bb.0: // %entry
-; SD-NEXT:    movi v1.2d, #0000000000000000
-; SD-NEXT:    mov v1.h[0], v0.h[0]
-; SD-NEXT:    mov v0.16b, v1.16b
-; SD-NEXT:    ret
+; SD-FP16-LABEL: testv8f16:
+; SD-FP16:       // %bb.0: // %entry
+; SD-FP16-NEXT:    fmov h0, h0
+; SD-FP16-NEXT:    ret
+;
+; SD-NOFP16-LABEL: testv8f16:
+; SD-NOFP16:       // %bb.0: // %entry
+; SD-NOFP16-NEXT:    movi v1.2d, #0000000000000000
+; SD-NOFP16-NEXT:    mov v1.h[0], v0.h[0]
+; SD-NOFP16-NEXT:    mov v0.16b, v1.16b
+; SD-NOFP16-NEXT:    ret
 ;
 ; GI-LABEL: testv8f16:
 ; GI:       // %bb.0: // %entry
@@ -86,13 +89,18 @@ entry:
 
 
 define <4 x half> @testv4f16(<4 x half> noundef %vec) {
-; SD-LABEL: testv4f16:
-; SD:       // %bb.0: // %entry
-; SD-NEXT:    movi v1.2d, #0000000000000000
-; SD-NEXT:    // kill: def $d0 killed $d0 def $q0
-; SD-NEXT:    mov v1.h[0], v0.h[0]
-; SD-NEXT:    fmov d0, d1
-; SD-NEXT:    ret
+; SD-FP16-LABEL: testv4f16:
+; SD-FP16:       // %bb.0: // %entry
+; SD-FP16-NEXT:    fmov h0, h0
+; SD-FP16-NEXT:    ret
+;
+; SD-NOFP16-LABEL: testv4f16:
+; SD-NOFP16:       // %bb.0: // %entry
+; SD-NOFP16-NEXT:    movi v1.2d, #0000000000000000
+; SD-NOFP16-NEXT:    // kill: def $d0 killed $d0 def $q0
+; SD-NOFP16-NEXT:    mov v1.h[0], v0.h[0]
+; SD-NOFP16-NEXT:    fmov d0, d1
+; SD-NOFP16-NEXT:    ret
 ;
 ; GI-LABEL: testv4f16:
 ; GI:       // %bb.0: // %entry
@@ -109,12 +117,17 @@ entry:
 
 
 define <8 x bfloat> @testv8bf16(<8 x bfloat> noundef %vec) {
-; SD-LABEL: testv8bf16:
-; SD:       // %bb.0: // %entry
-; SD-NEXT:    movi v1.2d, #0000000000000000
-; SD-NEXT:    mov v1.h[0], v0.h[0]
-; SD-NEXT:    mov v0.16b, v1.16b
-; SD-NEXT:    ret
+; SD-FP16-LABEL: testv8bf16:
+; SD-FP16:       // %bb.0: // %entry
+; SD-FP16-NEXT:    fmov h0, h0
+; SD-FP16-NEXT:    ret
+;
+; SD-NOFP16-LABEL: testv8bf16:
+; SD-NOFP16:       // %bb.0: // %entry
+; SD-NOFP16-NEXT:    movi v1.2d, #0000000000000000
+; SD-NOFP16-NEXT:    mov v1.h[0], v0.h[0]
+; SD-NOFP16-NEXT:    mov v0.16b, v1.16b
+; SD-NOFP16-NEXT:    ret
 ;
 ; GI-LABEL: testv8bf16:
 ; GI:       // %bb.0: // %entry
@@ -131,13 +144,18 @@ entry:
 
 
 define <4 x bfloat> @testv4bf16(<4 x bfloat> noundef %vec) {
-; SD-LABEL: testv4bf16:
-; SD:       // %bb.0: // %entry
-; SD-NEXT:    movi v1.2d, #0000000000000000
-; SD-NEXT:    // kill: def $d0 killed $d0 def $q0
-; SD-NEXT:    mov v1.h[0], v0.h[0]
-; SD-NEXT:    fmov d0, d1
-; SD-NEXT:    ret
+; SD-FP16-LABEL: testv4bf16:
+; SD-FP16:       // %bb.0: // %entry
+; SD-FP16-NEXT:    fmov h0, h0
+; SD-FP16-NEXT:    ret
+;
+; SD-NOFP16-LABEL: testv4bf16:
+; SD-NOFP16:       // %bb.0: // %entry
+; SD-NOFP16-NEXT:    movi v1.2d, #0000000000000000
+; SD-NOFP16-NEXT:    // kill: def $d0 killed $d0 def $q0
+; SD-NOFP16-NEXT:    mov v1.h[0], v0.h[0]
+; SD-NOFP16-NEXT:    fmov d0, d1
+; SD-NOFP16-NEXT:    ret
 ;
 ; GI-LABEL: testv4bf16:
 ; GI:       // %bb.0: // %entry
@@ -172,9 +190,7 @@ entry:
 define <4 x i32> @testv4i32(<4 x i32> noundef %vec) {
 ; SD-LABEL: testv4i32:
 ; SD:       // %bb.0: // %entry
-; SD-NEXT:    movi v1.2d, #0000000000000000
-; SD-NEXT:    mov v1.s[0], v0.s[0]
-; SD-NEXT:    mov v0.16b, v1.16b
+; SD-NEXT:    fmov s0, s0
 ; SD-NEXT:    ret
 ;
 ; GI-LABEL: testv4i32:
@@ -210,12 +226,17 @@ entry:
 
 
 define <8 x i16> @testv8i16(<8 x i16> noundef %vec) {
-; SD-LABEL: testv8i16:
-; SD:       // %bb.0: // %entry
-; SD-NEXT:    movi v1.2d, #0000000000000000
-; SD-NEXT:    mov v1.h[0], v0.h[0]
-; SD-NEXT:    mov v0.16b, v1.16b
-; SD-NEXT:    ret
+; SD-FP16-LABEL: testv8i16:
+; SD-FP16:       // %bb.0: // %entry
+; SD-FP16-NEXT:    fmov h0, h0
+; SD-FP16-NEXT:    ret
+;
+; SD-NOFP16-LABEL: testv8i16:
+; SD-NOFP16:       // %bb.0: // %entry
+; SD-NOFP16-NEXT:    movi v1.2d, #0000000000000000
+; SD-NOFP16-NEXT:    mov v1.h[0], v0.h[0]
+; SD-NOFP16-NEXT:    mov v0.16b, v1.16b
+; SD-NOFP16-NEXT:    ret
 ;
 ; GI-LABEL: testv8i16:
 ; GI:       // %bb.0: // %entry
@@ -230,13 +251,18 @@ entry:
 
 
 define <4 x i16> @testv4i16(<4 x i16> noundef %vec) {
-; SD-LABEL: testv4i16:
-; SD:       // %bb.0: // %entry
-; SD-NEXT:    movi v1.2d, #0000000000000000
-; SD-NEXT:    // kill: def $d0 killed $d0 def $q0
-; SD-NEXT:    mov v1.h[0], v0.h[0]
-; SD-NEXT:    fmov d0, d1
-; SD-NEXT:    ret
+; SD-FP16-LABEL: testv4i16:
+; SD-FP16:       // %bb.0: // %entry
+; SD-FP16-NEXT:    fmov h0, h0
+; SD-FP16-NEXT:    ret
+;
+; SD-NOFP16-LABEL: testv4i16:
+; SD-NOFP16:       // %bb.0: // %entry
+; SD-NOFP16-NEXT:    movi v1.2d, #0000000000000000
+; SD-NOFP16-NEXT:    // kill: def $d0 killed $d0 def $q0
+; SD-NOFP16-NEXT:    mov v1.h[0], v0.h[0]
+; SD-NOFP16-NEXT:    fmov d0, d1
+; SD-NOFP16-NEXT:    ret
 ;
 ; GI-LABEL: testv4i16:
 ; GI:       // %bb.0: // %entry
@@ -300,5 +326,3 @@ entry:
 ; CHECK: {{.*}}
 ; GI-FP16: {{.*}}
 ; GI-NOFP16: {{.*}}
-; SD-FP16: {{.*}}
-; SD-NOFP16: {{.*}}
